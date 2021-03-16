@@ -46,8 +46,8 @@ By default, wrtview will display clients in the 'lan' network on the openwrt, bu
 
 By default, wrtview checks for clients on 'wlan0' and 'wlan1'. but you can specify wireless interfaces that you would like to check for clients on. You can specify multiple wireless interfaces, in the format `<interface>[@<host>][:<alias>]`. The hostname part allows you to check for clients on a different OpenWRT that may be serving a different part of a building. So for instance:
 
-<font size=2>
-`wrtview -w wlan0:S2 -w wlan1:S5 -w wlan0@192.168.0.4:N2 -w wlan1@192.168.0.4:N5 192.168.0.2`
-</font>
+````text
+wrtview -w wlan0:S2 -w wlan1:S5 -w wlan0@192.168.0.4:N2 -w wlan1@192.168.0.4:N5 192.168.0.2
+```
 
 will cause wrtview to connect to 192.168.1.2 for all the data, and show the 'wlan0' and 'wlan1' interfaces named as 'S2' and 'S5' respectively. Addtionally, this will cause wrtview to connect to 192.168.0.4 for data on clients to its 'wlan0' and 'wlan1' interfaces, marking their wifi connections 'N2' and 'N5' respectively in the output.
