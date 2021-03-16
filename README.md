@@ -30,7 +30,22 @@ For wrtview to work, you will want to set up ssh to provide pubkey (passwordless
 
 If your router is at 192.168.1.1, all you need to do is type `wrtview` and you'll see output like this:
 
-![](images/output1.png)
+```text
+  H  192.168.1.1   openwrt         
+ADHE 192.168.1.100 MacbookPro        F0:18:98:36:06:73  Apple, Inc.             wlan1 493.286Mbps
+ADHE 192.168.1.101 MacbookPro-wired  00:50:B6:98:C4:29  GOOD WAY IND. CO., LTD
+ADHE 192.168.1.105 iPad              26:5A:90:A8:52:73  locally administered    wlan1 380.493Mbps
+ADHE 192.168.1.130 Veraphone         EA:24:8C:29:DA:12  locally administered    wlan1 429.656Mbps
+A    192.168.1.151                   76:2A:A6:21:85:EC  locally administered       
+ADHE 192.168.1.160 OldMacbookPro     20:C9:D0:84:02:D6  Apple, Inc.             wlan0 120.208Mbps
+  HE 192.168.1.182 MacookAir         D0:E1:40:91:88:1E  Apple, Inc.                
+ADHE 192.168.1.188 iPhone-John       2E:73:1F:31:B0:1D  locally administered    wlan1 456.389Mbps
+ADHE 192.168.1.200 lights-gw         00:17:88:26:0A:26  Philips Lighting BV        
+ADHE 192.168.1.201 tv                10:4F:A8:03:00:8C  Sony Corporation           
+ADHE 192.168.1.212 printer           3C:2A:F4:42:24:A2  Brother Industries, LT     
+A    192.168.1.228                   2E:73:1F:31:B0:1D  locally administered    wlan1 456.389Mbps
+ADHE 192.168.1.254 switch            00:1F:28:E2:66:82  HPN Supply Chain
+```
 
 As you can see, this network has a router called 'openwrt'. By default, all the hosts on the 'lan' network om the router are displayed. In the first column you can see whether a host is in the router's ARP table (`A`), whether it got a DHCP lease (`D`) and whether it is in the hosts (`H`) and ethers (`E`) file. Then there's the host's IP and name (the latter either from hosts, ethers or DHCP lease). After that there's the MAC-address and the manufacturer from the vendor database. Then if the MAC-address is found in the output of `iw <interface> station dump` for either wlan0 or wlan1, that is displayed with the expected throughput.
 
@@ -46,7 +61,7 @@ By default, wrtview will display clients in the 'lan' network on the openwrt, bu
 
 By default, wrtview checks for clients on 'wlan0' and 'wlan1'. but you can specify wireless interfaces that you would like to check for clients on. You can specify multiple wireless interfaces, in the format `<interface>[@<host>][:<alias>]`. The hostname part allows you to check for clients on a different OpenWRT that may be serving a different part of a building. So for instance:
 
-````text
+```text
 wrtview -w wlan0:S2 -w wlan1:S5 -w wlan0@192.168.0.4:N2 -w wlan1@192.168.0.4:N5 192.168.0.2
 ```
 
