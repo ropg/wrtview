@@ -11,20 +11,24 @@
 wrtview is a python package on [PyPI](https://pypi.org/project/wrtview). If you have python 3 installing is easy: 
 
 ```bash
-pip install wrtview
+python -m pip install wrtview
 ```
 
-Alternatively, you can clone the github repository and install from there:
+Alternatively, you can install the latest development version directly from this github repository:
 
 ```bash
-git clone https://github.com/ropg/wrtview
-cd wrtview
-pip install .
+python -m pip install git+https://github.com/ropg/wrtview.git
 ```
 
 ## Setting up the access point for pubkey ssh access
 
-For wrtview to work, you will want to set up ssh to provide pubkey (passwordless) access to your openwrt device. If you have a Mac or a linux machine, this is done by entering `scp ~/.ssh/id_rsa.pub root@<router>://etc/dropbear/authorized_keys`, replacing `<router>` with the name or ip-address of your router. If you type your password one last time you should now be able to log into your router without a pasword by just typing `ssh root@<router>`. As soon as that works you are all set up to use wrtview.
+For wrtview to work, you will want to set up ssh to provide pubkey (passwordless) access to your openwrt device. If you have a Mac or a linux machine, this is done by entering ...
+
+```bash
+scp ~/.ssh/id_rsa.pub root@<router>:/etc/dropbear/authorized_keys
+```
+
+... replacing `<router>` with the name or ip-address of your router. If you type your password one last time you should now be able to log into your router without a pasword by just typing `ssh root@<router>`. As soon as that works you are all set up to use wrtview.
 
 ## Using wrtview
 
@@ -47,17 +51,19 @@ A    192.168.1.228                   2E:73:1F:31:B0:1D  locally administered    
 ADHE 192.168.1.254 switch            00:1F:28:E2:66:82  HPN Supply Chain
 ```
 
-As you can see, this network has a router called 'openwrt'. By default, all the hosts on the 'lan' network om the router are displayed. In the first column you can see whether a host is in the router's ARP table (`A`), whether it got a DHCP lease (`D`) and whether it is in the hosts (`H`) and ethers (`E`) file. Then there's the host's IP and name (the latter either from hosts, ethers or DHCP lease). After that there's the MAC-address and the manufacturer from the vendor database. Then if the MAC-address is found in the output of `iw <interface> station dump` for either wlan0 or wlan1, that is displayed with the expected throughput.
+As you can see, this network has a router called 'openwrt'. By default, all the hosts on the 'lan' network om the router are displayed. In the first column you can see whether a host is in the router's ARP table (`A`), whether it was given a DHCP lease (`D`) and whether it is in the hosts (`H`) and ethers (`E`) files. Then there's the host's IP-address and name (the latter either from hosts, ethers or DHCP lease). After that there's the MAC-address and the manufacturer from the vendor database. Then if the MAC-address is found in the output of `iw <interface> station dump` for either wlan0 or wlan1, that is displayed with the expected throughput.
+
+> As you can see the wlan0 interface is slower than the wlan1, probably because the former is 2.4 GHz and the latter is on 5 GHz. Also, the Apple mobile products randomize their MAC-addresses by default to prevent tracking, so they show up as 'locally administered', meaning they invented their own MAC-address.
 
 ## Command line options
 
-### `--network`, `-n`
+`--network`, `-n`
 
 By default, wrtview will display clients in the 'lan' network on the openwrt, but you can set a different network here.
 
 &nbsp;
 
-### `--wireless`, `-w`
+`--wireless`, `-w`
 
 By default, wrtview checks for clients on 'wlan0' and 'wlan1'. but you can specify wireless interfaces that you would like to check for clients on. You can specify multiple wireless interfaces, in the format `<interface>[@<host>][:<alias>]`. The hostname part allows you to check for clients on a different OpenWRT that may be serving a different part of a building. So for instance:
 

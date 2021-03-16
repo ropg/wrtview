@@ -5,7 +5,7 @@ import os, subprocess, re, ipaddress, sys, argparse, pkg_resources
 
 def main():
     default_format = "{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} " + \
-                     "{vendor:22.22}  {wifi shorthand} {wifi expected throughput}"
+                     "{vendor:22.22}  {wifi alias} {wifi expected throughput}"
 
     whitespace = re.compile('\s+')
     hosts = {}
@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--hosts', default='/etc/hosts', metavar='<hosts-file>')
     parser.add_argument('--ethers', default='/etc/ethers', metavar='<ethers-file>')
     parser.add_argument('--network', '-n', default='lan', metavar='<interface>')
-    parser.add_argument('--wireless', '-w', action='append', default=['wlan0', 'wlan1'],
+    parser.add_argument('--wireless', '-w', nargs='*', default=['wlan0', 'wlan1'],
                         metavar='<interface>[@<host>][:<alias>]')
     parser.add_argument('--format', '-f', dest='format_str', default=default_format,
                         metavar='<format string>')
@@ -39,16 +39,16 @@ def main():
     # Get the wireless station data
     for w in args.wireless:
         e = w.split(":", 2)
-        part1 = shorthand = e[0]
+        part1 = alias = e[0]
         if len(e) == 2:
-            shorthand = e[1]
+            alias = e[1]
         e = part1.split('@', 2)
         iface = e[0]
         if len(e) == 2:
             whost = e[1]
         else:
             whost = args.host
-        stations.extend(wireless_stations(whost, iface, shorthand))
+        stations.extend(wireless_stations(whost, iface, alias))
 
     # DHCP
     leaseoutput = get_output(args.host, 'cat /tmp/dhcp.leases')
@@ -154,7 +154,7 @@ def in_same_subnet(ip1, ip2, mask):
     return ip2int(ip1) & ip2int(mask) == ip2int(ip2) & ip2int(mask)
 
 # append data from one wireless interface to stations[]
-def wireless_stations(host, interface, shorthand):
+def wireless_stations(host, interface, alias):
     stations = []
     station_re = re.compile('^Station ([0-9A-Fa-f:]+)')
     value_re = re.compile('\s+(.*?):\s*(.*)')
@@ -169,7 +169,7 @@ def wireless_stations(host, interface, shorthand):
             s['mac']= m.group(1).upper()
             s['wifi ap host'] = host
             s['wifi ap interface'] = interface
-            s['wifi shorthand'] = shorthand
+            s['wifi alias'] = alias
         else:
             m = value_re.search(line)
             if m:
