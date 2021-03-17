@@ -14,7 +14,7 @@ wrtview is a python package on [PyPI](https://pypi.org/project/wrtview). If you 
 python -m pip install wrtview
 ```
 
-Alternatively, you can install the latest development version directly from this github repository:
+Alternatively, you can install the latest development version directly from the GitHub repository:
 
 ```
 python -m pip install git+https://github.com/ropg/wrtview.git
@@ -97,6 +97,8 @@ Specify (in quotes) your own output format. If not specified, wrtview uses the f
 
 The first four fields in this format string are set to either hold a space or an A, D, H or E respectively. The fields with the numbers after them are padded with spaces and cut at the specified length so that the output lines up nicely. Apart from the fields listed in the default format, you can use `wifi` (either 'W' or ' '), `clientID`, `wifi ap host`, `wifi ap interface` and every field from the output of `iw station dump <interface>`, prepended with `wifi `.
 
+> More information on how the format string works can be found [here](https://www.programiz.com/python-programming/methods/string/format).
+
 &nbsp;
 
 `--sort`, `-s`
@@ -133,7 +135,7 @@ Shows the version number.
 
 ### Running wrtview on the OpenWRT station itself
 
-Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed and it does things in memory that should be done differently in a memory-contrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
+Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed and it does things in memory that should be done differently in a memory-constrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
 
 ### IPv6
 
