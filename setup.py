@@ -6,7 +6,7 @@ with open('README.md', encoding="utf-8") as f:
 
 setup(
     name="wrtview",
-    version="0.9.0",
+    version="0.9.1",
     description="Network information viewer for OpenWRT",
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -22,7 +22,7 @@ setup(
         "Tracker": "https://github.com/ropg/wrtview/issues",
     },
     packages=["wrtview"],
-    python_requires=">=3",
+    python_requires=">=3.5",
     setup_requires=["wheel"],
     install_requires=[],
     entry_points={

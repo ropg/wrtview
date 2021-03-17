@@ -170,7 +170,7 @@ def main():
         if spacer: print ('\n')
         spacer = True
         if not args.no_header:
-            print (f"Network '{network['name']}' on {args.host}:\n")
+            print ("Network '" + network['name'] + "' on " + args.host + ":\n")
         for host in sorted_hosts:
             if in_same_subnet(host.get('ip', ''), network['addr'], network['mask']):
                 print (args.format_str.format(**host))
@@ -183,9 +183,9 @@ def main():
             if host.get('wifi') and not host.get('printed'):
                 if not header_printed:
                     if len(networks) == 1:
-                        print (f"\nWiFi Stations not in this network:\n")
+                        print ('\nWiFi Stations not in this network:\n')
                     else:
-                        print (f"\nWiFi Stations not in these networks:\n")
+                        print ('\nWiFi Stations not in these networks:\n')
                     header_printed = True
                 print (args.format_str.format(**host))
 
@@ -194,7 +194,7 @@ def main():
 # return output from command at host as string
 def get_output(host, command):
     return subprocess.run(['ssh', 'root@' + host, command],
-                          capture_output = True, timeout = 5
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout = 5
                          ).stdout.decode('utf-8').strip()
 
 def ip2int(ip):
