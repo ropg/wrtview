@@ -126,3 +126,15 @@ Suppresses headers like `Network 'lan' on 192.168.1.1:`
 `--version`, `-v`
 
 Shows the version number. 
+
+&nbsp;
+
+## Known bugs, problems, limitations
+
+### Running wrtview on the OpenWRT station itself
+
+Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed and it does things in memory that should be done differently in a memory-contrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
+
+### IPv6
+
+At present, wrtview does not support IPv6. It would need an additional default layout for IPv6 networks and some other changes. This is definitely on the agenda.
