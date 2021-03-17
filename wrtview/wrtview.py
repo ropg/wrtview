@@ -29,6 +29,8 @@ def main():
                         metavar='<sort key>')
     parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
     parser.add_argument('--no-header', dest='no_header', action='store_true')
+    parser.add_argument('--version', '-v', action='version',
+                        version=pkg_resources.require('wrtview')[0].version)
     parser.add_argument('host', nargs='?', metavar='<name or ip>', default='192.168.1.1')
     args = parser.parse_args()
 

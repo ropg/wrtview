@@ -57,7 +57,7 @@ As you can see, this network has a router called 'openwrt'. By default, all the 
 
 Then if the MAC-address is found in the output of `iw <interface> station dump` for either wlan0 or wlan1, that interface is displayed with the expected throughput. You can merge in data from other access points that are serving the same network elsewere in the building, see below for details.
 
-> As you can see the wlan0 interface is slower than the wlan1, because in this case the former is on 2.4 GHz and the latter is on 5 GHz. Also, Apple handheld products randomize their MAC-addresses by default to prevent tracking, so they show up as 'locally administered', meaning they invented their own MAC-address. The Macbook Air is not on, and the stations with addresses ending in 151 and 228 have connected, but they are not in the hosts or ethers files. 
+> As you can see the wlan0 interface is slower than wlan1, because in this case the former is on 2.4 GHz and the latter is on 5 GHz. Also, Apple handheld products randomize their MAC-addresses by default to prevent tracking, so they show up as 'locally administered', meaning they invented their own MAC-address. The Macbook Air is not on, and the stations with addresses ending in 151 and 228 have connected, but they are not in the hosts or ethers files. 
 
 ## Command line options
 
@@ -120,3 +120,9 @@ By default, wrtview will print any wifi stations that were found associated with
 `--no-header`
 
 Suppresses headers like `Network 'lan' on 192.168.1.1:`
+
+&nbsp;
+
+`--version`, `-v`
+
+Shows the version number. 
