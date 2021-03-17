@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/wrtview.svg)](https://pypi.python.org/pypi/wrtview/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/klipz.svg)](https://pypi.python.org/pypi/wrtview/)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/ropg/wrtview/blob/master/LICENSE)
+[![commits since last](https://img.shields.io/github/commits-since/ropg/wrtview/latest.svg)](#)
 
 `wrtview` compactly displays data about hosts on a network centered around an OpenWRT router by combining data from various files and the output of commands on the OpenWRT. It is typically ran on a computer connected to a network that is built around an OpenWRT device, not on the OpenWRT device itself.
 
