@@ -8,7 +8,7 @@
 
 ## Installation
 
-wrtview is a python package on [PyPI](https://pypi.org/project/wrtview). If you have python 3 installing is easy: 
+wrtview is a python package on [PyPI](https://pypi.org/project/wrtview). If you have python 3.5 or newer installing is easy: 
 
 ```
 python -m pip install wrtview
