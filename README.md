@@ -77,6 +77,8 @@ wrtview -w wlan0:S2,wlan1:S5,wlan0@192.168.0.4:N2,wlan1@192.168.0.4:N5 192.168.0
 
 will cause wrtview to connect to 192.168.0.2 for the DHCP, hosts, ethers and ARP information, and show the 'wlan0' and 'wlan1' interfaces on that system as 'S2' and 'S5' respectively. Addtionally, this will cause wrtview to connect to 192.168.0.4 for data on clients to its 'wlan0' and 'wlan1' interfaces, marking their wifi connections 'N2' and 'N5' respectively in the output.
 
+> Note that you also need to set up passwordless ssh access like detailed above for any additional wifi access points that want queried in this way.
+
 &nbsp;
 
 `--leases`, `--hosts`, `--ethers`
@@ -87,13 +89,13 @@ These options can be used to specify alternative location for the DHCP leases fi
 
 `--format`, `-f`
 
-By default, wrtview prints output using the built-in default format string:
+Specify (in quotes) your own output format. If not specified, wrtview uses the following default format:
 
 ```
 {arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} {vendor:22.22}  {wifi alias} {wifi expected throughput}
 ```
 
-This first four fields in this format string are formatted to either hold a space or an A, D, H or E respectively. The fields with the numbers after them are padded and cut at the specified length so that the out lines up nicely. Apert from the ones in the default format, you can use `wifi` (either 'W' or ' '), `clientID`, `wifi ap host`, `wifi ap interface` and every field from the output of `iw station dump <interface>`, prepended with `wifi `.
+The first four fields in this format string are set to either hold a space or an A, D, H or E respectively. The fields with the numbers after them are padded with spaces and cut at the specified length so that the output lines up nicely. Apart from the fields listed in the default format, you can use `wifi` (either 'W' or ' '), `clientID`, `wifi ap host`, `wifi ap interface` and every field from the output of `iw station dump <interface>`, prepended with `wifi `.
 
 &nbsp;
 
