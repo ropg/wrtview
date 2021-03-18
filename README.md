@@ -3,7 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/wrtview.svg)](https://pypi.python.org/pypi/wrtview/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/klipz.svg)](https://pypi.python.org/pypi/wrtview/)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/ropg/wrtview/blob/master/LICENSE)
-[![commits since last](https://img.shields.io/github/commits-since/ropg/wrtview/latest.svg)](#)
+[![commits since last](https://img.shields.io/github/commits-since/ropg/wrtview/latest.svg)](https://github.com/ropg/wrtview/commits/main)
 
 `wrtview` compactly displays data about hosts on a network centered around an OpenWRT router by combining data from various files and the output of commands on the OpenWRT. It is typically ran on a computer connected to a network that is built around an OpenWRT device, not on the OpenWRT device itself.
 
@@ -78,7 +78,7 @@ wrtview -w wlan0:S2,wlan1:S5,wlan0@192.168.0.4:N2,wlan1@192.168.0.4:N5 192.168.0
 
 will cause wrtview to connect to 192.168.0.2 for the DHCP, hosts, ethers and ARP information, and show the 'wlan0' and 'wlan1' interfaces on that system as 'S2' and 'S5' respectively. Addtionally, this will cause wrtview to connect to 192.168.0.4 for data on clients to its 'wlan0' and 'wlan1' interfaces, marking their wifi connections 'N2' and 'N5' respectively in the output.
 
-> Note that you also need to set up passwordless ssh access like detailed above for any additional wifi access points that want queried in this way.
+> Note that you also need to set up passwordless ssh access like detailed above for any additional wifi access points that you want queried in this way.
 
 &nbsp;
 
@@ -136,7 +136,7 @@ Shows the version number.
 
 ### Running wrtview on the OpenWRT station itself
 
-Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed and it does things in memory that should be done differently in a memory-constrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
+Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed, it does things in memory that should be done differently in a memory-constrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
 
 ### IPv6
 
