@@ -126,6 +126,12 @@ Suppresses headers like `Network 'lan' on 192.168.1.1:`
 
 &nbsp;
 
+`--identity`, `-i`
+
+Use this to supply an ssh identity other than the default (which is usually `~/.ssh/id_rsa`).
+
+&nbsp;
+
 `--version`, `-v`
 
 Shows the version number. 
@@ -136,7 +142,7 @@ Shows the version number.
 
 ### Running wrtview on the OpenWRT station itself
 
-Currently wrtview is not really made to run on the OpenWRT router itself. It would need python3 (which is large) installed, it does things in memory that should be done differently in a memory-constrained environment, and it would need to get files and command output locally instead of via ssh. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
+Currently wrtview is not really made to run on the OpenWRT router itself. It does try to detect if it is about to execute a command on itself and leaves off the ssh connection. But it would need python3 (which is large) installed and does things in memory that should be done differently in a memory-constrained environment. If people want this on OpenWRT it would probably be best to re-write it in Lua. Presently this is out of scope.
 
 ### IPv6
 

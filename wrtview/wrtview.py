@@ -1,14 +1,10 @@
 #!/usr/local/opt/python/libexec/bin/python
 
-import os, subprocess, re, ipaddress, sys, argparse, pkg_resources
+import os, subprocess, socket, re, ipaddress, sys, argparse, pkg_resources
 
-
-hosts = []
-stations = []
 
 def main():
-    global hosts
-    global stations
+    global hosts, args
     default_format = "{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} " + \
                      "{vendor:22.22}  {wifi alias} {wifi expected throughput}"
 
@@ -25,22 +21,27 @@ def main():
                         metavar='<interface>[@<host>][:<alias>]')
     parser.add_argument('--format', '-f', dest='format_str', default=default_format,
                         metavar='"<format string>"')
-    parser.add_argument('--sort', '-s', nargs=1, default='ip_as_int',
-                        metavar='<sort key>')
+    parser.add_argument('--sort', '-s', default='ip_as_int', metavar='<sort key>')
     parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
     parser.add_argument('--no-header', dest='no_header', action='store_true')
+    parser.add_argument('--identity', '-i', metavar='<identity file>')
     parser.add_argument('--version', '-v', action='version',
                         version=pkg_resources.require('wrtview')[0].version)
-    parser.add_argument('host', nargs='?', metavar='<name or ip>', default='192.168.1.1')
+    parser.add_argument('router', nargs='?', metavar='<name or ip>', default='192.168.1.1')
     args = parser.parse_args()
 
     networks = []
     for network in args.network.split(','):
-        addr = get_output(args.host, 'uci get network.' + network + '.ipaddr')
-        mask = get_output(args.host, 'uci get network.' + network + '.netmask')
+        addr = get_output('uci get network.' + network + '.ipaddr')
+        mask = get_output('uci get network.' + network + '.netmask')
         if addr == '' or mask == '':
             raise Exception("Network not found: " + network)
         networks.append({'name': network, 'addr': addr, 'mask': mask})
+
+    # Print it just once, not once for each ssh command
+    if args.identity and not os.path.isfile(args.identity):
+        sys.stderr.write('Warning: Identity file ' + args.identity +
+                         ' not accessible: No such file or directory.\n')
 
     # Read vendor database
     vendor_re = re.compile('^([0-9A-F]+)\s+(.*?)$')
@@ -53,13 +54,14 @@ def main():
     # Once in memory is enough...
     del vendorsoutput
 
-    # get all the global data we need from the target
-    leaseoutput = get_output(args.host, 'cat ' + args.leases)
-    hostsoutput = get_output(args.host, 'cat ' + args.hosts)
-    ethersoutput = get_output(args.host, 'cat ' + args.ethers)
-    arpoutput = get_output(args.host, 'ip -4 neigh')
+    # get all the data we need from the target
+    leaseoutput = get_output('cat ' + args.leases)
+    hostsoutput = get_output('cat ' + args.hosts)
+    ethersoutput = get_output('cat ' + args.ethers)
+    arpoutput = get_output('ip -4 neigh')
 
     # Get the wireless station data
+    stations = []
     station_re = re.compile('^Station ([0-9A-Fa-f:]+)')
     value_re = re.compile('\s+(.*?):\s*(.*)')
     for w in args.wireless.split(','):
@@ -67,8 +69,8 @@ def main():
         alias = parts[1] if len(parts) == 2 else parts[0]
         parts = parts[0].split('@', 2)
         iface = parts[0]
-        whost = parts[1] if len(parts) == 2 else args.host
-        iwoutput = get_output(whost, 'iw ' + iface + ' station dump')
+        whost = parts[1] if len(parts) == 2 else args.router
+        iwoutput = get_output('iw ' + iface + ' station dump', whost)
         new_station = {}
         for line in iwoutput.splitlines():
             m = station_re.search(line)
@@ -87,6 +89,8 @@ def main():
                     new_station['wifi ' + m.group(1)] = m.group(2)
         if new_station != {}:
             stations.append(new_station)
+
+    hosts = []
 
     # DHCP
     for line in leaseoutput.splitlines():
@@ -121,11 +125,15 @@ def main():
                 host['ethers'] = 'E'
 
     # ARP
+    arp_re = re.compile('^(\w+?) dev \w+? lladdr (.+?) ')
     for line in arpoutput.splitlines():
-        ip, _, _, _, mac, *_ = whitespace.split(line)
-        host = find_host('ip', ip)
-        host['mac'] = mac.upper()
-        host['arp'] = 'A'
+        m = arp_re.search(line)
+        if m:
+            ip = m.group(1)
+            mac = m.group(2)
+            host = find_host('ip', ip)
+            host['mac'] = mac.upper()
+            host['arp'] = 'A'
 
     # Merge in data from the wireless stations
     idx = 0
@@ -170,7 +178,7 @@ def main():
         if spacer: print ('\n')
         spacer = True
         if not args.no_header:
-            print ("Network '" + network['name'] + "' on " + args.host + ":\n")
+            print ("Network '" + network['name'] + "' on " + args.router + ":\n")
         for host in sorted_hosts:
             if in_same_subnet(host.get('ip', ''), network['addr'], network['mask']):
                 print (args.format_str.format(**host))
@@ -192,10 +200,25 @@ def main():
 
 
 # return output from command at host as string
-def get_output(host, command):
-    return subprocess.run(['ssh', 'root@' + host, command],
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout = 5
-                         ).stdout.decode('utf-8').strip()
+def get_output(command, router = None):
+    global args
+    if not router:
+        router = args.router
+    # See if we are running locally
+    if router == socket.gethostname() or router == socket.gethostbyname(socket.gethostname()):
+        shell_command = command
+    else:
+        identity = ' -i ' + args.identity if args.identity else ''
+        shell_command = 'ssh' + identity + ' root@' + router + ' ' + command
+    try:
+        return subprocess.run(shell_command, shell=True, timeout=5, check=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                             ).stdout.decode('utf-8').strip()
+    except subprocess.CalledProcessError as e:
+        sys.stderr.write(e.stderr.decode('utf-8') + '\n')
+        # interactive ssh turns off echo so terminal may be in wrong state
+        subprocess.run('reset', shell=True)
+        raise e;
 
 def ip2int(ip):
     try:
@@ -212,8 +235,7 @@ def find_host(k, v, add=True):
         if host[k] == v:
             return host
     if add:
-        new_item = { k: v }
-        hosts.append(new_item)
+        hosts.append({ k: v })
         return hosts[-1]
 
 
