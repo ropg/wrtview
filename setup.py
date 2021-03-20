@@ -6,7 +6,7 @@ with open('README.md', encoding="utf-8") as f:
 
 setup(
     name="wrtview",
-    version="0.10.1dev",
+    version="0.11.0-dev",
     description="Network information viewer for OpenWRT",
     long_description=readme,
     long_description_content_type='text/markdown',

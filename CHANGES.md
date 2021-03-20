@@ -1,6 +1,7 @@
-## 0.10.1
+## 0.11.0
 
-* Uses `-o "BatchMode yes"` for ssh to prevent password login 
+* Uses `-o "BatchMode yes"` for ssh to prevent password login
+* Added `--greppable` / `-g` for fixed number of fields in output
 
 ## 0.10.0
 

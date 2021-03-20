@@ -132,6 +132,12 @@ Use this to supply an ssh identity other than the default (which is usually `~/.
 
 &nbsp;
 
+`--greppable`, `-g` 
+
+This will replace all empty fields with a minus sign to make sure the number of space-separated fields in the output is the same for each line.
+
+&nbsp;
+
 `--version`, `-v`
 
 Shows the version number. 

@@ -25,6 +25,7 @@ def main():
     parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
     parser.add_argument('--no-header', dest='no_header', action='store_true')
     parser.add_argument('--identity', '-i', metavar='<identity file>')
+    parser.add_argument('--greppable', '-g', action='store_const', const='-', default = ' ')
     parser.add_argument('--version', '-v', action='version',
                         version=pkg_resources.require('wrtview')[0].version)
     parser.add_argument('router', nargs='?', metavar='<name or ip>', default='192.168.1.1')
@@ -162,10 +163,10 @@ def main():
     # Fix up missing keys
     for host in hosts:
         # Make sure sort key exists for all hosts
-        host[args.sort] = host.get(args.sort, ' ')
-        # make sure the fields used in format_str are ' ' if they didn't exist
+        host[args.sort] = host.get(args.sort, args.greppable)
+        # make sure the fields used in format_str are ' ' (or '-' if greppable) if they didn't exist
         for field in re.findall('\{(.*?)[\:\}]', args.format_str):
-            host[field] = host.get(field, ' ');
+            host[field] = host.get(field, args.greppable);
         # add numeric ip for sorting
         host['ip_as_int'] = ip2int(host.get('ip', ''))
 
