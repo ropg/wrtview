@@ -1,3 +1,7 @@
+## 0.10.1
+
+* Uses `-o "BatchMode yes"` for ssh to prevent password login 
+
 ## 0.10.0
 
 * Now has a '--identity', '-i' command line option to supply an ssh identity file

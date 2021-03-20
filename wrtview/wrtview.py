@@ -209,15 +209,14 @@ def get_output(command, router = None):
         shell_command = command
     else:
         identity = ' -i ' + args.identity if args.identity else ''
-        shell_command = 'ssh' + identity + ' root@' + router + ' ' + command
+        shell_command = 'ssh' + identity + ' -o "BatchMode yes" root@' + router + ' ' + command
     try:
         return subprocess.run(shell_command, shell=True, timeout=5, check=True,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE
                              ).stdout.decode('utf-8').strip()
-    except subprocess.CalledProcessError as e:
-        sys.stderr.write(e.stderr.decode('utf-8') + '\n')
-        # interactive ssh turns off echo so terminal may be in wrong state
-        subprocess.run('reset', shell=True)
+    except Exception as e:
+        if e.stderr:
+            sys.stderr.write(e.stderr.decode('utf-8') + '\n')
         raise e;
 
 def ip2int(ip):
