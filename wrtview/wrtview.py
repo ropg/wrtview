@@ -113,7 +113,7 @@ def main():
         ip, name, *_ = whitespace.split(line)
         host = find_host('ip', ip)
         host['name'] = name
-        host['hosts'] = 'H';
+        host['hosts'] = 'H'
 
     # ethers
     for line in ethersoutput.splitlines():
@@ -140,7 +140,6 @@ def main():
             host['arp'] = 'A'
 
     # Merge in data from the wireless stations
-    idx = 0
     for s in stations:
         mac = s['mac']
         found = False
@@ -155,13 +154,13 @@ def main():
     # Add in MAC vendor string from database
     for host in hosts:
         mac = host.get('mac')
-        if not mac: continue
-        if "26AE".find(mac[1]) != -1:
-            host['vendor'] = 'locally administered'
-        else:
-            m = mac.replace(':', '')
-            vendor = vendors.get(m[0:10], vendors.get(m[0:8], vendors.get(m[0:6], "unknown")))
-            host['vendor'] = vendor
+        if mac:
+            if "26AE".find(mac[1]) != -1:
+                host['vendor'] = 'locally administered'
+            else:
+                m = mac.replace(':', '')
+                vendor = vendors.get(m[0:10], vendors.get(m[0:8], vendors.get(m[0:6], "unknown")))
+                host['vendor'] = vendor
 
     # Fix up missing keys
     for host in hosts:
@@ -169,7 +168,7 @@ def main():
         host[args.sort] = host.get(args.sort, args.greppable)
         # make sure the fields used in format_str are ' ' (or '-' if greppable) if they didn't exist
         for field in re.findall('\{(.*?)[\:\}]', args.format_str):
-            host[field] = host.get(field, args.greppable);
+            host[field] = host.get(field, args.greppable)
         # add numeric ip for sorting
         host['ip_as_int'] = ip2int(host.get('ip', ''))
 
@@ -221,7 +220,7 @@ def get_output(command, router = None):
     except Exception as e:
         if e.stderr:
             sys.stderr.write(e.stderr.decode('utf-8') + '\n')
-        raise e;
+        raise e
 
 def ip2int(ip):
     try:
@@ -240,6 +239,7 @@ def find_host(k, v, add=True):
     if add:
         hosts.append({ k: v })
         return hosts[-1]
+    return None
 
 
 if __name__ == "__main__":
