@@ -129,7 +129,7 @@ def main():
                 host['ethers'] = 'E'
 
     # ARP
-    arp_re = re.compile('^(\w+?) dev \w+? lladdr (.+?) ')
+    arp_re = re.compile('^([\d\.]+?) dev \S+? lladdr ([0-9A-Fa-f:]+?) ')
     for line in arpoutput.splitlines():
         m = arp_re.search(line)
         if m:
