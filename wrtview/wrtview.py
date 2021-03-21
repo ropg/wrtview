@@ -16,16 +16,19 @@ def main():
     parser.add_argument('--leases', default='/tmp/dhcp.leases', metavar='<leases-file>')
     parser.add_argument('--hosts', default='/etc/hosts', metavar='<hosts-file>')
     parser.add_argument('--ethers', default='/etc/ethers', metavar='<ethers-file>')
-    parser.add_argument('--network', '-n', default='lan', metavar='<interface>')
+    parser.add_argument('--network', '-n', default='lan', metavar='<interface>[,...]',
+                        help='logical network interfaces (e.g. \'lan\') to list')
     parser.add_argument('--wireless', '-w', default='wlan0,wlan1',
-                        metavar='<interface>[@<host>][:<alias>]')
+                        metavar='<interface>[@<host>][:<alias>][,...]',
+                        help='wireless interfaces, see README.md')
     parser.add_argument('--format', '-f', dest='format_str', default=default_format,
                         metavar='"<format string>"')
     parser.add_argument('--sort', '-s', default='ip_as_int', metavar='<sort key>')
     parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
     parser.add_argument('--no-header', dest='no_header', action='store_true')
     parser.add_argument('--identity', '-i', metavar='<identity file>')
-    parser.add_argument('--greppable', '-g', action='store_const', const='-', default = ' ')
+    parser.add_argument('--greppable', '-g', action='store_const', const='-', default = ' ',
+                        help='fixed number of space-separated output fields')
     parser.add_argument('--version', '-v', action='version',
                         version=pkg_resources.require('wrtview')[0].version)
     parser.add_argument('router', nargs='?', metavar='<name or ip>', default='192.168.1.1')

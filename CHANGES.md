@@ -2,6 +2,7 @@
 
 * Uses `-o "BatchMode yes"` for ssh to prevent password login
 * Added `--greppable` / `-g` for fixed number of fields in output
+* Added a few help messages for command line options when invoked with `-h`
 
 ## 0.10.0
 
