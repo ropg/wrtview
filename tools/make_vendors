@@ -1,0 +1,7 @@
+#!/bin/sh
+
+./get-oui
+./get-iab
+mv  ieee-oui.txt    ../wrtview/vendors
+cat ieee-iab.txt >> ../wrtview/vendors
+rm ieee-*
