@@ -27,6 +27,10 @@ def main():
     parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
     parser.add_argument('--no-header', dest='no_header', action='store_true')
     parser.add_argument('--identity', '-i', metavar='<identity file>')
+    parser.add_argument('--no-ping', action='store_true',
+                        help='Prevents pinging of whole network from the target OpenWRT')
+    parser.add_argument('--max-ping', metavar='<#>', type=int, default=254,
+                        help='Maximum number of simultaneous pings')
     parser.add_argument('--greppable', '-g', action='store_const', const='-', default = ' ',
                         help='fixed number of space-separated output fields')
     parser.add_argument('--version', '-v', action='version',
@@ -114,6 +118,33 @@ def main():
         host = find_host('ip', ip)
         host['name'] = name
         host['hosts'] = 'H'
+
+    # Ping scan.
+    if not args.no_ping:
+        # upload our pingall script
+        pingall = pkg_resources.resource_filename('wrtview', 'pingall')
+        identity = ' -i ' + args.identity if args.identity else ''
+        local_cmd('scp' + identity + ' -B ' + pingall + ' root@' + args.router + ':/tmp/pingall')
+        remote_cmd('chmod a+x /tmp/pingall')
+        # gather all ip numbers to be pinged
+        ping_ips = []
+        for net in networks:
+            ping_ips += list(ipaddress.IPv4Interface(net['addr'] + '/' +
+                                                     net['mask']).network.hosts())
+        # ping them in batches of --max-ping
+        while ping_ips:
+            ping_now, ping_ips = ping_ips[:args.max_ping], ping_ips[args.max_ping:]
+            ping_output = remote_cmd('/tmp/pingall ' + ' '.join([str(i) for i in ping_now]))
+            for ip in ping_output.splitlines():
+                find_host('ip', ip)['ping'] = 'P'
+        remote_cmd('rm /tmp/pingall')
+
+    # ARP
+    for ip, mac in re.findall(r'^([\d\.]+?) dev \S+? lladdr ([0-9A-Fa-f:]+?) ',
+                              remote_cmd('ip -4 neigh'), re.MULTILINE):
+        host = find_host('ip', ip)
+        host['mac'] = mac.upper()
+        host['arp'] = 'A'
 
     # ethers
     for line in ethersoutput.splitlines():

@@ -93,7 +93,7 @@ These options can be used to specify alternative location for the DHCP leases fi
 Specify (in quotes) your own output format. If not specified, wrtview uses the following default format:
 
 ```
-{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} {vendor:22.22}  {wifi alias} {wifi expected throughput}
+{ping}{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} {vendor:22.22}  {wifi alias} {wifi expected throughput}
 ```
 
 The first four fields in this format string are set to either hold a space or an A, D, H or E respectively. The fields with the numbers after them are padded with spaces and cut at the specified length so that the output lines up nicely. Apart from the fields listed in the default format, you can use `wifi` (either 'W' or ' '), `clientID`, `wifi ap host`, `wifi ap interface` and every field from the output of `iw station dump <interface>`, prepended with `wifi `.
@@ -111,6 +111,18 @@ wrtview -s name 192.168.0.2
 ```
 
 will sort the output on hostname.
+
+&nbsp;
+
+`--no-ping`
+
+wrtview will upload a small script to the router to ping entire subnets so we can inicated which hosts are alive, either by ping respinse or because they appear in the ARP table because of the ping. Use `--no-ping` if you do not want this. 
+
+&nbsp;
+
+`--max-ping`
+
+Maximum number of pings executed simultaneously. Set at 254 by default.
 
 &nbsp;
 
