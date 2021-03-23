@@ -38,23 +38,25 @@ If your router is at 192.168.1.1, all you need to do is enter `wrtview` and you'
 ```
 Network 'lan' on 192.168.1.1:
 
-  H  192.168.1.1   openwrt         
-ADHE 192.168.1.100 MacbookPro        F0:18:98:36:06:73  Apple, Inc.             wlan1 493.286Mbps
-ADHE 192.168.1.101 MacbookPro-wired  00:50:B6:98:C4:29  GOOD WAY IND. CO., LTD
-ADHE 192.168.1.105 iPad              26:5A:90:A8:52:73  locally administered    wlan1 380.493Mbps
-ADHE 192.168.1.130 JessicaPhone      EA:24:8C:29:DA:12  locally administered    wlan1 429.656Mbps
-AD   192.168.1.151                   76:2A:A6:21:85:EC  locally administered       
-ADHE 192.168.1.160 OldMacbookPro     20:C9:D0:84:02:D6  Apple, Inc.             wlan0 120.208Mbps
-  HE 192.168.1.182 MacookAir         D0:E1:40:91:88:1E  Apple, Inc.                
-ADHE 192.168.1.188 iPhone-John       2E:73:1F:31:B0:1D  locally administered    wlan1 456.389Mbps
-ADHE 192.168.1.200 lights-gw         00:17:88:26:0A:26  Philips Lighting BV        
-ADHE 192.168.1.201 tv                10:4F:A8:03:00:8C  Sony Corporation           
-ADHE 192.168.1.212 printer           3C:2A:F4:42:24:A2  Brother Industries, LT     
-AD   192.168.1.228                   2E:73:1F:31:B0:1D  locally administered    wlan1 456.389Mbps
-ADHE 192.168.1.254 switch            00:1F:28:E2:66:82  HPN Supply Chain
+P  H  192.168.1.1   openwrt          68:FF:7B:9E:9A:DC TP-LINK TECHNOLOGIES C
+PADHE 192.168.1.100 MacbookPro       F0:18:98:36:06:73 Apple, Inc.             wlan1 493.286Mbps
+PADHE 192.168.1.101 MacbookPro-wired 00:50:B6:98:C4:29 GOOD WAY IND. CO., LTD
+ ADHE 192.168.1.105 iPad             26:5A:90:A8:52:73 locally administered    wlan1 380.493Mbps
+ ADHE 192.168.1.130 JessicaPhone     EA:24:8C:29:DA:12 locally administered    wlan1 429.656Mbps
+ AD   192.168.1.151                  76:2A:A6:21:85:EC locally administered       
+PADHE 192.168.1.160 OldMacbookPro    20:C9:D0:84:02:D6 Apple, Inc.             wlan0 120.208Mbps
+   HE 192.168.1.182 MacookAir        D0:E1:40:91:88:1E Apple, Inc.                
+PADHE 192.168.1.188 iPhone-John      2E:73:1F:31:B0:1D locally administered    wlan1 456.389Mbps
+PADHE 192.168.1.200 lights-gw        00:17:88:26:0A:26 Philips Lighting BV        
+  DHE 192.168.1.201 tv               10:4F:A8:03:00:8C Sony Corporation           
+PADHE 192.168.1.212 printer          3C:2A:F4:42:24:A2 Brother Industries, LT     
+PAD   192.168.1.228                  2E:73:1F:31:B0:1D locally administered    wlan1 456.389Mbps
+PADHE 192.168.1.254 switch           00:1F:28:E2:66:82 HPN Supply Chain
 ```
 
-As you can see, this network has a router called 'openwrt'. By default, all the hosts on the 'lan' network on the router are displayed. In the first column you can see whether a host is in the router's ARP table (`A`), whether it was given a DHCP lease (`D`) and whether it is in the hosts (`H`) and ethers (`E`) files. Then there's the host's IP-address and name (the latter either from hosts, ethers or DHCP lease). After that there's the MAC-address and the manufacturer from the vendor database.
+> If output goes to a terminal, wrtview will show offline hosts greyed and the router itself in bold. If the output is piped or redirected, it is just plain ASCII.
+
+As you can see, this network has a router called 'openwrt'. By default, all the hosts on the 'lan' network on the router are displayed. In the first column you can see whether a host responded to print (`P`), is in the router's ARP table (`A`), was given a DHCP lease (`D`) and whether it is in the hosts (`H`) and ethers (`E`) files. Then there's the host's IP-address and name (the latter either from hosts, DHCP lease or ethers file). After that there's the MAC-address and the manufacturer from the vendor database.
 
 Then if the MAC-address is found in the output of `iw <interface> station dump` for either wlan0 or wlan1, that interface is displayed with the expected throughput. You can merge in data from other access points that are serving the same network elsewere in the building, see below for details.
 
@@ -64,16 +66,20 @@ Then if the MAC-address is found in the output of `iw <interface> station dump` 
 
 `--network`, `-n`
 
-By default, wrtview will display clients in the 'lan' network on the openwrt, but you can set a different network here. To specify multiple networks, separate them with commas, without any added spaces. They will be listed one after the other with their own headers.
+By default, wrtview will display clients in the 'lan' network on the openwrt, but you can set a different network here. To specify multiple networks simply use the -n option multiple times. Networks will be listed one after the other with a header. So the exmaple below will list hosts on two networks: 'lan' and 'guest'.
+
+```
+wrtview -n lan -n guest 192.168.0.2
+```
 
 &nbsp;
 
 `--wireless`, `-w`
 
-By default, wrtview checks for clients on 'wlan0' and 'wlan1'. But you can specify any set of wireless interfaces that you would like to check for clients on, separating them with commas without any added spaces. Interfaces should be provided in the format `<interface>[@<host>][:<alias>]`. The hostname part allows you to check for clients on a different OpenWRT that may be serving a different part of a building. So for instance:
+By default, wrtview checks for clients on 'wlan0' and 'wlan1'. But you can specify any set of wireless interfaces that you would like to check for clients on. Simply use multiple times to specify multiple wireless interfaces. Each interface should be given in the format `<interface>[@<host>][:<alias>]`. The hostname part allows you to check for clients on a different OpenWRT that may be serving a different part of a building. So for instance:
 
 ```
-wrtview -w wlan0:S2,wlan1:S5,wlan0@192.168.0.4:N2,wlan1@192.168.0.4:N5 192.168.0.2
+wrtview -w wlan0:S2 -w wlan1:S5 -w wlan0@192.168.0.4:N2 -w wlan1@192.168.0.4:N5 192.168.0.2
 ```
 
 will cause wrtview to connect to 192.168.0.2 for the DHCP, hosts, ethers and ARP information, and show the 'wlan0' and 'wlan1' interfaces on that system as 'S2' and 'S5' respectively. Addtionally, this will cause wrtview to connect to 192.168.0.4 for data on clients to its 'wlan0' and 'wlan1' interfaces, marking their wifi connections 'N2' and 'N5' respectively in the output.

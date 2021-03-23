@@ -1,3 +1,14 @@
+## 1.0.0
+
+* BREAKING CHANGE: networks and wifi-interfaces now with multiple `-n` and `-w` options
+* Added ping script to ping entire networks from router
+* Offline hosts are greyed, router itself in bold
+* Fixed various bugs in presenting data
+* More readable code parsing data out of command output
+* More descriptive errors
+* Updated vendors file for MAC->vendor lookup from IEEE with new (included) script
+* Cleaner code
+
 ## 0.11.1
 
 * Fixed bug that caused ARP-table to not read correctly

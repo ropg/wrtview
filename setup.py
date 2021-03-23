@@ -6,7 +6,7 @@ with open('README.md', encoding="utf-8") as f:
 
 setup(
     name="wrtview",
-    version="0.11.1",
+    version="1.0.0",
     description="Network information viewer for OpenWRT",
     long_description=readme,
     long_description_content_type='text/markdown',
@@ -31,5 +31,8 @@ setup(
             "wrtview = wrtview.wrtview:main",
         ],
     },
-    package_data={"wrtview": ["vendors"]},
+    package_data={"wrtview": [
+        "vendors",
+        "pingall",
+    ]},
 )

@@ -1,36 +1,33 @@
 #!/usr/local/opt/python/libexec/bin/python
 
-import os, subprocess, socket, re, ipaddress, sys, argparse, pkg_resources
+import os, subprocess, socket, re, ipaddress, sys, argparse, pkg_resources, traceback
 
 
 def main():
     global hosts, args
-    default_format = "{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} " + \
+    default_format = "{ping}{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} " + \
                      "{vendor:22.22}  {wifi alias} {wifi expected throughput}"
-
-    whitespace = re.compile('\s+')
-
 
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--leases', default='/tmp/dhcp.leases', metavar='<leases-file>')
     parser.add_argument('--hosts', default='/etc/hosts', metavar='<hosts-file>')
     parser.add_argument('--ethers', default='/etc/ethers', metavar='<ethers-file>')
-    parser.add_argument('--network', '-n', default='lan', metavar='<interface>[,...]',
-                        help='logical network interfaces (e.g. \'lan\') to list')
-    parser.add_argument('--wireless', '-w', default='wlan0,wlan1',
-                        metavar='<interface>[@<host>][:<alias>][,...]',
+    parser.add_argument('--network', '-n', metavar='<network>', action='append',
+                        help='logical network names (e.g. \'lan\') to list')
+    parser.add_argument('--wireless', '-w', action='append',
+                        metavar='<interface>[@<host>][:<alias>]',
                         help='wireless interfaces, see README.md')
     parser.add_argument('--format', '-f', dest='format_str', default=default_format,
                         metavar='"<format string>"')
     parser.add_argument('--sort', '-s', default='ip_as_int', metavar='<sort key>')
-    parser.add_argument('--no-ghosts', dest='no_ghosts', action='store_true')
-    parser.add_argument('--no-header', dest='no_header', action='store_true')
-    parser.add_argument('--identity', '-i', metavar='<identity file>')
+    parser.add_argument('--no-ghosts', action='store_true')
+    parser.add_argument('--no-header', action='store_true')
     parser.add_argument('--no-ping', action='store_true',
                         help='Prevents pinging of whole network from the target OpenWRT')
     parser.add_argument('--max-ping', metavar='<#>', type=int, default=254,
                         help='Maximum number of simultaneous pings')
+    parser.add_argument('--identity', '-i', metavar='<file>')
     parser.add_argument('--greppable', '-g', action='store_const', const='-', default = ' ',
                         help='fixed number of space-separated output fields')
     parser.add_argument('--version', '-v', action='version',
@@ -38,13 +35,21 @@ def main():
     parser.add_argument('router', nargs='?', metavar='<name or ip>', default='192.168.1.1')
     args = parser.parse_args()
 
+    # argparse cannot properly have defaults of lists somehow
+    if not args.wireless:
+        args.wireless = ['wlan0', 'wlan1']
+    if not args.network:
+        args.network = ['lan']
+
+    # get data on the network names (specified with --network / -n)
     networks = []
-    for network in args.network.split(','):
-        addr = get_output('uci get network.' + network + '.ipaddr')
-        mask = get_output('uci get network.' + network + '.netmask')
-        if addr == '' or mask == '':
-            raise Exception("Network not found: " + network)
-        networks.append({'name': network, 'addr': addr, 'mask': mask})
+    for network in args.network:
+        nonet = "Problem reading network information for network '" + network + "'"
+        addr  = remote_cmd('uci get network.' + network + '.ipaddr', err=nonet)
+        mask  = remote_cmd('uci get network.' + network + '.netmask', err=nonet)
+        m = re.search(r'HWaddr\s+([0-9A-Fa-f:]+)', remote_cmd('ifconfig ' + network, err=nonet))
+        mac = m.group(1) if m else None
+        networks.append({'name': network, 'addr': addr, 'mask': mask, 'mac': mac})
 
     # Print it just once, not once for each ssh command
     if args.identity and not os.path.isfile(args.identity):
@@ -52,36 +57,24 @@ def main():
                          ' not accessible: No such file or directory.\n')
 
     # Read vendor database
-    vendor_re = re.compile('^([0-9A-F]+)\s+(.*?)$')
+    # This is the files installed in /usr/share/arp-scan when package 'arp-scan-database'
+    # is installed on an openwrt box, all concatenated into the file called vendors.
     vendors = {}
-    vendorsoutput = pkg_resources.resource_string("wrtview", "vendors").decode("utf-8")
-    for line in vendorsoutput.splitlines():
-        s = vendor_re.search(line)
-        if s:
-            vendors[s.group(1)] = s.group(2)
-    # Once in memory is enough...
-    del vendorsoutput
-
-    # get all the data we need from the target
-    leaseoutput = get_output('cat ' + args.leases)
-    hostsoutput = get_output('cat ' + args.hosts)
-    ethersoutput = get_output('cat ' + args.ethers)
-    arpoutput = get_output('ip -4 neigh')
+    for prefix, vendor in re.findall(r'^([0-9A-F]+)\s+(.*?)$',
+     pkg_resources.resource_string('wrtview', 'vendors').decode('utf-8'), re.MULTILINE):
+        vendors[prefix] = vendor
 
     # Get the wireless station data
     stations = []
-    station_re = re.compile('^Station ([0-9A-Fa-f:]+)')
-    value_re = re.compile('\s+(.*?):\s*(.*)')
-    for w in args.wireless.split(','):
+    for w in args.wireless:
         parts = w.split(":", 2)
         alias = parts[1] if len(parts) == 2 else parts[0]
         parts = parts[0].split('@', 2)
         iface = parts[0]
         whost = parts[1] if len(parts) == 2 else args.router
-        iwoutput = get_output('iw ' + iface + ' station dump', whost)
         new_station = {}
-        for line in iwoutput.splitlines():
-            m = station_re.search(line)
+        for line in remote_cmd('iw ' + iface + ' station dump', whost).splitlines():
+            m = re.search(r'^Station ([0-9A-Fa-f:]+)', line)
             if m:
                 if new_station != {}:
                     stations.append(new_station)
@@ -92,7 +85,7 @@ def main():
                 new_station['wifi ap interface'] = iface
                 new_station['wifi alias'] = alias
             else:
-                m = value_re.search(line)
+                m = re.search(r'\s+(.*?):\s*(.*)', line)
                 if m:
                     new_station['wifi ' + m.group(1)] = m.group(2)
         if new_station != {}:
@@ -101,20 +94,20 @@ def main():
     hosts = []
 
     # DHCP
-    for line in leaseoutput.splitlines():
+    for line in remote_cmd('cat ' + args.leases, on_err='').splitlines():
         expire, mac, ip, name, clientID = line.split(' ')
         host = find_host('ip', ip)
-        if name != "*": host['name'] = name
+        if name != "*":
+            host['name'] = name
         host['mac'] = mac.upper()
         host['expire'] = int(expire)
-        if clientID != "*": host['clientID'] = clientID
+        if clientID != "*":
+            host['clientID'] = clientID
         host['dhcp'] = 'D'
 
     # hosts
-    for line in hostsoutput.splitlines():
-        line = re.sub('#.*', '', line.strip())
-        if line == '': continue
-        ip, name, *_ = whitespace.split(line)
+    for ip, name in re.findall(r'^\s*([\d\.]+?)\s+([\w-]+)',
+                               remote_cmd('cat ' + args.hosts, on_err=''), re.MULTILINE):
         host = find_host('ip', ip)
         host['name'] = name
         host['hosts'] = 'H'
@@ -147,40 +140,35 @@ def main():
         host['arp'] = 'A'
 
     # ethers
-    for line in ethersoutput.splitlines():
-        line = re.sub('#.*', '', line.strip())
-        if line == '': continue
-        mac, name = whitespace.split(line)
+    for mac, name in re.findall(r'^([\dA-Fa-f:]+?)\s+([\w-]+)',
+                                remote_cmd('cat ' + args.ethers, on_err=''), re.MULTILINE):
         for host in hosts:
             if host.get('mac') == mac.upper():
-                host['name'] == name
+                host['name'] = host.get('name', '(' + name + ')')
                 host['ethers'] = 'E'
             if host.get('name') == name:
-                host['mac'] = mac.upper()
+                if not host.get('mac'):
+                    host['mac'] = mac.upper()
+                    host['mac_down'] = True
                 host['ethers'] = 'E'
-
-    # ARP
-    arp_re = re.compile('^([\d\.]+?) dev \S+? lladdr ([0-9A-Fa-f:]+?) ')
-    for line in arpoutput.splitlines():
-        m = arp_re.search(line)
-        if m:
-            ip = m.group(1)
-            mac = m.group(2)
-            host = find_host('ip', ip)
-            host['mac'] = mac.upper()
-            host['arp'] = 'A'
 
     # Merge in data from the wireless stations
     for s in stations:
         mac = s['mac']
         found = False
         for host in hosts:
-            if mac == host.get('mac'):
+            if mac == host.get('mac') and not host.get('mac_down'):
                 found = True
                 host.update(s)
         if not found:
             s['ip'] = "?"
             hosts.append(s)
+
+    # Add info about router itself
+    for network in networks:
+        host = find_host('ip', network['addr'])
+        host['mac'] = host.get('mac', network['mac'])
+        host['is_router'] = 'R'
 
     # Add in MAC vendor string from database
     for host in hosts:
@@ -198,13 +186,24 @@ def main():
         # Make sure sort key exists for all hosts
         host[args.sort] = host.get(args.sort, args.greppable)
         # make sure the fields used in format_str are ' ' (or '-' if greppable) if they didn't exist
-        for field in re.findall('\{(.*?)[\:\}]', args.format_str):
+        for field in re.findall(r'\{(.*?)[\:\}]', args.format_str):
             host[field] = host.get(field, args.greppable)
         # add numeric ip for sorting
         host['ip_as_int'] = ip2int(host.get('ip', ''))
+        # determine if host is online
+        if host.get('ping') == 'P' or host.get('arp') == 'A' or host.get('wifi'):
+            host['online'] = 'O'
 
     # Sort
     sorted_hosts = sorted(hosts, key=lambda k: k[args.sort])
+
+    # Set ANSI control sequences if we're on a tty
+    if sys.stdout.isatty():
+        bold   = '\u001b[1m'
+        faint  = '\u001b[2m'
+        normal = '\u001b[0m'
+    else:
+        bold = normal = faint = ''
 
     # Print output for each network, sorted by args.sort column
     spacer = False
@@ -215,7 +214,11 @@ def main():
             print ("Network '" + network['name'] + "' on " + args.router + ":\n")
         for host in sorted_hosts:
             if in_same_subnet(host.get('ip', ''), network['addr'], network['mask']):
-                print (args.format_str.format(**host))
+                if not host.get('online'):
+                    print (faint, end='')
+                if host.get('is_router'):
+                    print (bold, end='')
+                print (args.format_str.format(**host) + normal)
                 host['printed'] = True
 
     # Print the 'ghosts': wifi stations that were not found in the networks specified
@@ -232,26 +235,38 @@ def main():
                 print (args.format_str.format(**host))
 
 
-
-# return output from command at host as string
-def get_output(command, router = None):
+# return output from command at router as string, defaults to args.router
+#
+# err:    optional more human-readable string to describe what went wrong
+# on_err: optional string to return instead of raising exception when error
+def remote_cmd(command, router=None, err=None, on_err=False):
     global args
     if not router:
         router = args.router
-    # See if we are running locally
-    if router == socket.gethostname() or router == socket.gethostbyname(socket.gethostname()):
-        shell_command = command
-    else:
+    # See that router is indeed remote
+    if router != socket.gethostname() and router != socket.gethostbyname(socket.gethostname()):
         identity = ' -i ' + args.identity if args.identity else ''
-        shell_command = 'ssh' + identity + ' -o "BatchMode yes" root@' + router + ' ' + command
+        command = 'ssh' + identity + ' -o "BatchMode yes" root@' + router + ' ' + command
+    return local_cmd(command, err, on_err)
+
+# Execute command locally
+def local_cmd(shell_command, err=None, on_err=None):
     try:
         return subprocess.run(shell_command, shell=True, timeout=5, check=True,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE
                              ).stdout.decode('utf-8').strip()
     except Exception as e:
-        if e.stderr:
-            sys.stderr.write(e.stderr.decode('utf-8') + '\n')
-        raise e
+        if on_err:
+            return on_err
+        else:
+            if err:
+                sys.stderr.write(err + '\n\n')
+            sys.stderr.write(str(e))
+            if e.stderr:
+                sys.stderr.write(' (' + e.stderr.strip().decode('utf-8') + ')')
+            sys.stderr.write('\n')
+            sys.exit(1)
+
 
 def ip2int(ip):
     try:
