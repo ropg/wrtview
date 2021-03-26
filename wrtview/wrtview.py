@@ -6,7 +6,7 @@ import os, subprocess, socket, re, ipaddress, sys, argparse, pkg_resources, trac
 def main():
     global hosts, args
     default_format = "{ping}{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} " + \
-                     "{vendor:22.22}  {wifi alias} {wifi expected throughput}"
+                     "{vendor:22.22}  {wifi alias} {wifi speeds}"
 
     # Parse command line arguments
     parser = argparse.ArgumentParser()
@@ -42,14 +42,20 @@ def main():
         args.network = ['lan']
 
     # get data on the network names (specified with --network / -n)
+    uci_output = remote_cmd('uci show network', err="Problem reading network information")
     networks = []
     for network in args.network:
-        nonet = "Problem reading network information for network '" + network + "'"
-        addr  = remote_cmd('uci get network.' + network + '.ipaddr', err=nonet)
-        mask  = remote_cmd('uci get network.' + network + '.netmask', err=nonet)
-        m = re.search(r'HWaddr\s+([0-9A-Fa-f:]+)', remote_cmd('ifconfig ' + network, err=nonet))
-        mac = m.group(1) if m else None
-        networks.append({'name': network, 'addr': addr, 'mask': mask, 'mac': mac})
+        net = {}
+        for k, v in re.findall(r'^network\.' + network + '\.(.*?)=\'(.*?)\'$', uci_output,
+                               re.MULTILINE):
+            net[k] = v
+        if not net.get('ipaddr'):
+            raise Exception("Network not found: " + network)
+        net['name'] = network
+        net['realif']  = 'br-' + network if net.get('type') == 'bridge' else net.get('ifname', '')
+        m = re.search(r'HWaddr\s+([0-9A-Fa-f:]+)', remote_cmd('ifconfig ' + net['realif'], on_err=''))
+        net['mac'] = m.group(1) if m else None
+        networks.append(net)
 
     # Print it just once, not once for each ssh command
     if args.identity and not os.path.isfile(args.identity):
@@ -72,25 +78,35 @@ def main():
         parts = parts[0].split('@', 2)
         iface = parts[0]
         whost = parts[1] if len(parts) == 2 else args.router
-        new_station = {}
+        ns = {}
         for line in remote_cmd('iw ' + iface + ' station dump', whost).splitlines():
             m = re.search(r'^Station ([0-9A-Fa-f:]+)', line)
             if m:
-                if new_station != {}:
-                    stations.append(new_station)
-                    new_station = {}
-                new_station['mac']= m.group(1).upper()
-                new_station['wifi'] = 'W'
-                new_station['wifi ap host'] = whost
-                new_station['wifi ap interface'] = iface
-                new_station['wifi alias'] = alias
+                if ns != {}:
+                    stations.append(ns)
+                    ns = {}
+                ns['mac']= m.group(1).upper()
+                ns['wifi'] = 'W'
+                ns['wifi ap host'] = whost
+                ns['wifi ap interface'] = iface
+                ns['wifi alias'] = alias
             else:
                 m = re.search(r'\s+(.*?):\s*(.*)', line)
                 if m:
-                    new_station['wifi ' + m.group(1)] = m.group(2)
-        if new_station != {}:
-            stations.append(new_station)
+                    ns['wifi ' + m.group(1)] = m.group(2)
+        if ns != {}:
+            stations.append(ns)
 
+    # Add 'wifi speeds': rounded values for rx, tx and (if available) expected throughput
+    for s in stations:
+        rx = whole_mbps(s.get('wifi rx bitrate', ''))
+        tx = whole_mbps(s.get('wifi tx bitrate', ''))
+        exp = whole_mbps(s.get('wifi expected throughput', ''))
+        s['wifi speeds'] = rx + '/' + tx
+        if exp != '':
+            s['wifi speeds'] += '/' + exp
+
+    # This will hold all hosts found by any of the methods below
     hosts = []
 
     # DHCP
@@ -122,8 +138,8 @@ def main():
         # gather all ip numbers to be pinged
         ping_ips = []
         for net in networks:
-            ping_ips += list(ipaddress.IPv4Interface(net['addr'] + '/' +
-                                                     net['mask']).network.hosts())
+            ping_ips += list(ipaddress.IPv4Interface(net['ipaddr'] + '/' +
+                                                     net['netmask']).network.hosts())
         # ping them in batches of --max-ping
         while ping_ips:
             ping_now, ping_ips = ping_ips[:args.max_ping], ping_ips[args.max_ping:]
@@ -166,7 +182,7 @@ def main():
 
     # Add info about router itself
     for network in networks:
-        host = find_host('ip', network['addr'])
+        host = find_host('ip', network['ipaddr'])
         host['mac'] = host.get('mac', network['mac'])
         host['is_router'] = 'R'
 
@@ -213,7 +229,7 @@ def main():
         if not args.no_header:
             print ("Network '" + network['name'] + "' on " + args.router + ":\n")
         for host in sorted_hosts:
-            if in_same_subnet(host.get('ip', ''), network['addr'], network['mask']):
+            if in_same_subnet(host.get('ip', ''), network['ipaddr'], network['netmask']):
                 if not host.get('online'):
                     print (faint, end='')
                 if host.get('is_router'):
@@ -267,6 +283,13 @@ def local_cmd(shell_command, err=None, on_err=None):
             sys.stderr.write('\n')
             sys.exit(1)
 
+# Rounds first numeric value found in string
+def whole_mbps(s):
+    m = re.match(r'\d+(\.\d+)?', s)
+    if m:
+        return str(int(float(m[0]) + 0.5))
+    else:
+        return ''
 
 def ip2int(ip):
     try:
@@ -277,6 +300,7 @@ def ip2int(ip):
 def in_same_subnet(ip1, ip2, mask):
     return ip2int(ip1) & ip2int(mask) == ip2int(ip2) & ip2int(mask)
 
+# Either return existing hosts entry for k == v or create new one and return it.
 def find_host(k, v, add=True):
     global hosts
     for host in hosts:

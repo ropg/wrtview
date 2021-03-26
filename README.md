@@ -39,18 +39,18 @@ If your router is at 192.168.1.1, all you need to do is enter `wrtview` and you'
 Network 'lan' on 192.168.1.1:
 
 P  H  192.168.1.1   openwrt          68:FF:7B:9E:9A:DC TP-LINK TECHNOLOGIES C
-PADHE 192.168.1.100 MacbookPro       F0:18:98:36:06:73 Apple, Inc.             wlan1 493.286Mbps
+PADHE 192.168.1.100 MacbookPro       F0:18:98:36:06:73 Apple, Inc.             wlan1 300/240/176
 PADHE 192.168.1.101 MacbookPro-wired 00:50:B6:98:C4:29 GOOD WAY IND. CO., LTD
- ADHE 192.168.1.105 iPad             26:5A:90:A8:52:73 locally administered    wlan1 380.493Mbps
- ADHE 192.168.1.130 JessicaPhone     EA:24:8C:29:DA:12 locally administered    wlan1 429.656Mbps
+ ADHE 192.168.1.105 iPad             26:5A:90:A8:52:73 locally administered    wlan1 24/260/188
+ ADHE 192.168.1.130 JessicaPhone     EA:24:8C:29:DA:12 locally administered    wlan1 120/200/100
  AD   192.168.1.151                  76:2A:A6:21:85:EC locally administered       
-PADHE 192.168.1.160 OldMacbookPro    20:C9:D0:84:02:D6 Apple, Inc.             wlan0 120.208Mbps
+PADHE 192.168.1.160 OldMacbookPro    20:C9:D0:84:02:D6 Apple, Inc.             wlan0 6/195/147
    HE 192.168.1.182 MacookAir        D0:E1:40:91:88:1E Apple, Inc.                
-PADHE 192.168.1.188 iPhone-John      2E:73:1F:31:B0:1D locally administered    wlan1 456.389Mbps
+PADHE 192.168.1.188 iPhone-John      2E:73:1F:31:B0:1D locally administered    wlan1 740/650/550
 PADHE 192.168.1.200 lights-gw        00:17:88:26:0A:26 Philips Lighting BV        
   DHE 192.168.1.201 tv               10:4F:A8:03:00:8C Sony Corporation           
 PADHE 192.168.1.212 printer          3C:2A:F4:42:24:A2 Brother Industries, LT     
-PAD   192.168.1.228                  2E:73:1F:31:B0:1D locally administered    wlan1 456.389Mbps
+PAD   192.168.1.228                  2E:73:1F:31:B0:1D locally administered    wlan1 240/195/154
 PADHE 192.168.1.254 switch           00:1F:28:E2:66:82 HPN Supply Chain
 ```
 
@@ -66,7 +66,7 @@ Then if the MAC-address is found in the output of `iw <interface> station dump` 
 
 `--network`, `-n`
 
-By default, wrtview will display clients in the 'lan' network on the openwrt, but you can set a different network here. To specify multiple networks simply use the -n option multiple times. Networks will be listed one after the other with a header. So the exmaple below will list hosts on two networks: 'lan' and 'guest'.
+By default, wrtview will display clients in the 'lan' network on the openwrt, but you can set a different network here. To specify multiple networks simply use the -n option multiple times. Networks will be listed one after the other with a header. So the example below will list hosts on two networks: 'lan' and 'guest'.
 
 ```
 wrtview -n lan -n guest 192.168.0.2
@@ -99,7 +99,7 @@ These options can be used to specify alternative location for the DHCP leases fi
 Specify (in quotes) your own output format. If not specified, wrtview uses the following default format:
 
 ```
-{ping}{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} {vendor:22.22}  {wifi alias} {wifi expected throughput}
+{ping}{arp}{dhcp}{hosts}{ethers} {ip:13.13} {name:17.17} {mac:17.17} {vendor:22.22}  {wifi alias} {wifi speeds}
 ```
 
 The first four fields in this format string are set to either hold a space or an A, D, H or E respectively. The fields with the numbers after them are padded with spaces and cut at the specified length so that the output lines up nicely. Apart from the fields listed in the default format, you can use `wifi` (either 'W' or ' '), `clientID`, `wifi ap host`, `wifi ap interface` and every field from the output of `iw station dump <interface>`, prepended with `wifi `.

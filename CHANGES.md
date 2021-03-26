@@ -1,3 +1,8 @@
+## 1.0.1
+
+* More robust determination of network interface names
+* Speeds now reported as rounded Mbps for rx, tx (and expected throughput if available)
+
 ## 1.0.0
 
 * BREAKING CHANGE: networks and wifi-interfaces now with multiple `-n` and `-w` options
